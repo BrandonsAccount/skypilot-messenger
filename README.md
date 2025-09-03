@@ -6,13 +6,13 @@ SkyPilot Messenger takes user prompts, enriches them with context, and delivers 
 It’s not just message passing, it’s intelligent orchestration. This is the service that ensures your LLMs respond 
 consistently, securely, and with the right abstractions for downstream systems.
 
-# How to configure Messenger
+### How to configure Messenger
 `conf/instructions.md` contains the buildtime policies/instructions that Messenger will use to interact with the LLM API. 
 These get translated into a JSON format and stored in `app/message/instructions.json` during the build process by using `build-tools/instructions_translator.py`.
 
 `app/message/` contains the runtime configuration files that Messenger will use to interact with the LLM API and MCP servers.
 
-# How to build and run Messenger
+### How to build and run Messenger
 ```bash
 ./build-tools/instructions_translator.py --input_file "conf/instructions.md" --output_file "app/message/instructions.json"
 docker build -t skypilot-messenger .
