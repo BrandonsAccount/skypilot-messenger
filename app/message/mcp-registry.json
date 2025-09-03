@@ -1,0 +1,23 @@
+{
+
+  "gitlab.get_pipeline_failures": {
+    "description": "List failed pipelines in a time window.",
+    "input_schema": {
+    "type": "object",
+    "required": ["project_id", "since", "until"],
+    "properties": {
+      "project_id": {"type": "string"},
+      "since": {"type": "string", "format": "date-time"},
+      "until": {"type": "string", "format": "date-time"}
+    }
+    },
+    "output_schema": {"type": "array"},
+    "rate_limit": "60/min",
+    "auth_scope": "gitlab:read"
+  },
+  "jira.search_issues": {
+    "description": "JQL search over tickets.",
+    "input_schema": {"type": "object", "required": ["jql"]},
+    "output_schema": {"type": "array"}
+  }
+}

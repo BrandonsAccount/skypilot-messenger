@@ -1,0 +1,17 @@
+{
+  "meta": {
+    "user_id": "",
+    "session_id": "",
+    "timestamp": "",
+    "version": "1"
+  },
+  "instructions": {},
+  "options": {},
+  "feedback": {},
+  "conversation": {},
+  "prompt": {},
+  "user_profile": {},
+  "capabilities": {},
+  "resources": {},
+  "output-schema": {}
+}

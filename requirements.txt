@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+httpx
+jsonschema
+python-dotenv
+pytest
+gunicorn
+loguru
