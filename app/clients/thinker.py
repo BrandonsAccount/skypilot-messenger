@@ -1,14 +1,17 @@
 import httpx
 from urllib.parse import urlparse
 import logging
+from lib.skyhelper_logger.skyhelper_logger import fancy_logger
 from typing import Any, Dict
 import uuid
 import json
 from jsonschema import validate, ValidationError
 
+log = fancy_logger(__name__)
+
 class ThinkerClient():
-    def __init__(self, llm_api_url: str, timeout, max_attempts: int = 3):
-        self.llm_api_url = self._validate_url(llm_api_url, "LLM API URL")
+    def __init__(self, thinker_api_url: str, timeout, max_attempts: int = 3):
+        self.thinker_api_url = self._validate_url(thinker_api_url, "Thinker API URL")
         self.max_attempts = max_attempts
         self.timeout = timeout
 
@@ -30,15 +33,18 @@ class ThinkerClient():
         attempts = 0
         while response_is_valid == False and attempts < self.max_attempts:
             try:
+                log.info(f"Sending JSON-RPC request to LLM (attempt {attempts + 1})", extra={"request": jsonrpc_request})
                 async with httpx.AsyncClient(timeout=self.timeout) as client:
-                    response = await client.post(self.llm_api_url, json=jsonrpc_request)
+                    response = await client.post(self.thinker_api_url, json=jsonrpc_request)
                     response.raise_for_status()
                     result = response.json()
+
+                    log.info(f"Received response from LLM", extra={"response": result})
 
                     if "error" in result:
                         error = result["error"]
                         if error.get("code") == -32000:
-                            logging.error(f"LLM rate limit exceeded: {error}", exc_info=True)
+                            log.error(f"LLM rate limit exceeded: {error}", exc_info=True)
                             return {
                                 "error": "Rate limit exceeded",
                                 "details": error.get("message"),
@@ -46,22 +52,22 @@ class ThinkerClient():
                             }
 
                     if not self.validate_llm_response(result['result']):
-                        logging.warning("LLM response did not match output schema, retrying...")
+                        log.warning("LLM response did not match output schema, retrying...")
                         message.set_feedback("LLM response did not match output schema, retrying...")
                         attempts += 1
                         continue
 
-                    logging.info("LLM JSON-RPC request successful", extra={"request": jsonrpc_request, "response": result})
+                    log.success("LLM JSON-RPC request successful", extra={"request": jsonrpc_request, "response": result})
                     return result
 
             except httpx.RequestError as exc:
-                logging.error(f"Request error while contacting LLM: {exc}", exc_info=True)
+                log.error(f"Request error while contacting LLM: {exc}", exc_info=True)
                 return {"error": "LLM service unreachable", "details": str(exc)}
             except httpx.HTTPStatusError as exc:
-                logging.error(f"LLM returned HTTP error: {exc}", exc_info=True)
+                log.error(f"LLM returned HTTP error: {exc}", exc_info=True)
                 return {"error": "LLM service error", "details": str(exc)}
             except Exception as exc:
-                logging.error(f"Unexpected error: {exc}", exc_info=True)
+                log.error(f"Unexpected error: {exc}", exc_info=True)
                 return {"error": "Unexpected error", "details": str(exc)}
 
     def validate_llm_response(self, response: Dict[str, Any]) -> bool:
@@ -75,5 +81,5 @@ class ThinkerClient():
             validate(instance=response, schema=schema)
             return True
         except (ValidationError, FileNotFoundError, json.JSONDecodeError) as exc:
-            logging.error(f"LLM response validation failed: {exc}", exc_info=True)
+            log.error(f"LLM response validation failed: {exc}", exc_info=True)
             return False

@@ -17,17 +17,19 @@ class Message():
     def __init__(self
                  , user_id: str = ""
                  , session_id: str = ""
-                 , version: str = "alpha"
-                 , feedback: str = ""
                  , prompt: str = ""
+                 , llm_provider: str = "openai"
+                 , llm: str = "gpt-5-nano"
                  , user_profile: str = None
                  ):
         self.user_id = user_id
         self.session_id = session_id
-        self.feedback = feedback
         self.prompt = prompt
+        self.llm_provider = llm_provider
+        self.llm = llm
         self.user_profile = user_profile
 
+        # WHAT: The conversation attribute is a list that holds the sequence of messages exchanged in the session.
         self.conversation = []
 
         # WHAT: The following attributes are populated from JSON files. They provide the necessary context and structure for the conversation.
@@ -47,7 +49,6 @@ class Message():
         })
 
     def set_feedback(self, feedback: str):
-        self.feedback = feedback
         self.conversation.append({
             "role": "assistant",
             "content": feedback,
@@ -68,9 +69,10 @@ class Message():
         return json.dumps({
             "user_id": self.user_id,
             "session_id": self.session_id,
-            "feedback": self.feedback,
             "prompt": self.prompt,
             "user_profile": self.user_profile,
+            "llm_provider": self.llm_provider,
+            "llm": self.llm,
             "conversation": self.conversation,
             "instructions": self.instructions,
             "options": self.options,
