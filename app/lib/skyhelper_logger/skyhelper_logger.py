@@ -216,27 +216,64 @@ class FancyLogger:
     def __init__(self, logger: logging.Logger | logging.LoggerAdapter):
         self._log = logger
 
-    def _emit(self, level_key: str, msg: str, **extra):
+    def _emit(self, level_key: str, msg: str, **kwargs: Any) -> None:
+        """
+        Emit a log record.
+
+        - kwargs: treated as structured 'extra' fields unless they are reserved
+          logging kwargs: 'exc_info', 'stack_info', 'stacklevel'. These are
+          popped and forwarded explicitly.
+        """
         level_name, icon, hint = _ICON_LEVEL_HINT[level_key]
         level_no = getattr(logging, level_name)
+
+        # Extract special logging kwargs if present, removing them from extra
+        exc_info = kwargs.pop("exc_info", None)
+        stack_info = kwargs.pop("stack_info", None)
+        stacklevel = kwargs.pop("stacklevel", None)
+
         # icon & hint become fields for both Dev and JSON formatters
-        extra = {**extra, "icon": icon, "icon_level": hint}
-        if isinstance(self._log, logging.LoggerAdapter):
-            self._log.log(level_no, msg, extra=extra)
-        else:
-            self._log.log(level_no, msg, extra=extra)
+        extra = {**kwargs, "icon": icon, "icon_level": hint}
 
-    # public API
-    def header(self, msg: str, icon: str | None = None, **extra):
-        icon_override = icon or _ICON_LEVEL_HINT["header"][1]
-        self._emit("header", msg, icon=icon_override, **extra)
+        # Build final kwargs for logger.log
+        log_kwargs: Dict[str, Any] = {}
+        if extra is not None:
+            log_kwargs["extra"] = extra
+        if exc_info is not None:
+            log_kwargs["exc_info"] = exc_info
+        if stack_info is not None:
+            log_kwargs["stack_info"] = stack_info
+        if stacklevel is not None:
+            # Python 3.8+ supports stacklevel
+            try:
+                log_kwargs["stacklevel"] = int(stacklevel)
+            except Exception:
+                # ignore if not an int
+                pass
 
-    def info(self, msg: str, **extra):    self._emit("info", msg, **extra)
-    def success(self, msg: str, **extra): self._emit("success", msg, **extra)
-    def waiting(self, msg: str, **extra): self._emit("waiting", msg, **extra)
-    def warn(self, msg: str, **extra):    self._emit("warn", msg, **extra)
-    def error(self, msg: str, **extra):   self._emit("error", msg, **extra)
-    def debug(self, msg: str, **extra):   self._emit("debug", msg, **extra)
+        # Finally emit
+        self._log.log(level_no, msg, **log_kwargs)
+
+    # Convenience methods
+    def debug(self, msg: str, **extra: Any) -> None:
+        self._emit('debug', msg, **extra)
+
+    def info(self, msg: str, **extra: Any) -> None:
+        self._emit('info', msg, **extra)
+
+    def success(self, msg: str, **extra: Any) -> None:
+        self._emit('success', msg, **extra)
+
+    def waiting(self, msg: str, **extra: Any) -> None:
+        # semantic helper used in code; log at INFO level with a prefix
+        self._emit('waiting', f"[waiting] {msg}", **extra)
+
+    def warning(self, msg: str, **extra: Any) -> None:
+        self._emit('warning', msg, **extra)
+
+    def error(self, msg: str, **extra: Any) -> None:
+        # Accept exc_info=True/Exception objects etc via kwargs
+        self._emit('error', msg, **extra)
 
 def fancy_logger(name: str | None = None, **context) -> FancyLogger:
     """

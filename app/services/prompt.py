@@ -1,4 +1,4 @@
-from message.message import Message
+from lib.message.message import Message
 from clients.thinker import ThinkerClient
 from clients.mcp import MCPClient
 from typing import Any, Dict, Optional
@@ -37,8 +37,7 @@ async def process(user_prompt: str, user_id: str = "0", session_id: str = "0"):
             return {"error": "Malformed response from Thinker"}
         elif response["result"]['answer'] and response["result"]['actions'] == []:
             print('\n\n\n\nFinal Response to return to GUI:')
-            log.info(message.to_json())
-            return json.loads(message.to_json())
+            return message.get_contents()
 
         # this is just being used to short-circuit the loop for now while testing
         #return response.get("result", response.get("error", {"message": "Unknown error occurred"}))

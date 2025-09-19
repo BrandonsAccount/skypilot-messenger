@@ -28,7 +28,7 @@ class ThinkerClient():
         Sends a message document to the LLM service using JSON-RPC 2.0 and returns the response.
         Follows MCP principles: stateless, explicit input/output, robust error handling.
         """
-        jsonrpc_request = {"jsonrpc": "2.0", "method": "processMessage", "params": message.to_json(), "id": str(uuid.uuid4())}
+        jsonrpc_request = {"jsonrpc": "2.0", "method": "processMessage", "params": json.dumps(message.get_contents()), "id": str(uuid.uuid4())}
         response_is_valid = False
         attempts = 0
         while response_is_valid == False and attempts < self.max_attempts:
@@ -76,7 +76,7 @@ class ThinkerClient():
         WHY: Ensures contract between LLM and messenger is maintained.
         """
         try:
-            with open("message/output-schema.json") as schema_file:
+            with open("lib/message/output-schema.json") as schema_file:
                 schema = json.load(schema_file)
             validate(instance=response, schema=schema)
             return True

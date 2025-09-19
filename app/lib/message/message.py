@@ -4,6 +4,7 @@ import json
 from datetime import datetime
 
 def safe_load_json(path):
+    '''Load JSON content from a file, returning an empty dict if the file is empty.'''
     with open(path) as f:
         content = f.read().strip()
         if not content:
@@ -34,11 +35,11 @@ class Message():
 
         # WHAT: The following attributes are populated from JSON files. They provide the necessary context and structure for the conversation.
         # WHY: This design allows for easy updates and modifications to the conversation structure without changing the code.
-        self.instructions = safe_load_json("message/instructions.json")
-        self.options = safe_load_json("message/options.json")
+        self.instructions = safe_load_json("lib/message/instructions.json")
+        self.options = safe_load_json("lib/message/options.json")
         self.capabilities = {}
-        self.resources = safe_load_json("message/resources.json")
-        self.output_schema = safe_load_json("message/output-schema.json")
+        self.resources = safe_load_json("lib/message/resources.json")
+        self.output_schema = safe_load_json("lib/message/output-schema.json")
 
     def set_prompt(self, prompt: str):
         self.prompt = prompt
@@ -62,11 +63,8 @@ class Message():
             "timestamp": datetime.now().isoformat()
         })
 
-    def to_json(self) -> str:
-        """
-        Serializes the message object to JSON format.
-        """
-        return json.dumps({
+    def get_contents(self) -> Dict[str, Any]:
+        return {
             "user_id": self.user_id,
             "session_id": self.session_id,
             "prompt": self.prompt,
@@ -79,4 +77,4 @@ class Message():
             "capabilities": self.capabilities,
             "resources": self.resources,
             "output_schema": self.output_schema
-        }, indent=2)
+        }
